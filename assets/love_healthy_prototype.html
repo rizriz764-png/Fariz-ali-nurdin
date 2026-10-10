@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Love & Healthy — AI Visual Health Assistant</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome CDN for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts: Inter & Nunito -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            title: ['Nunito', 'sans-serif'],
+          },
+          colors: {
+            medBlue: {
+              50: '#F0F4FA',
+              100: '#D2E3FC',
+              500: '#1A73E8',
+              600: '#1557B0',
+              700: '#174EA6',
+            },
+            medGreen: {
+              50: '#E8F5E9',
+              100: '#C8E6C9',
+              500: '#34A853',
+              600: '#2E7D32',
+            },
+            medRed: {
+              50: '#FCE8E6',
+              100: '#FAD2CF',
+              500: '#EA4335',
+              600: '#C5221F',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Smooth transition styles */
+    .screen {
+      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    }
+    .screen.hidden {
+      display: none;
+      opacity: 0;
+      transform: scale(0.98);
+    }
+    
+    /* Bounding box animation */
+    @keyframes scan-box {
+      0%, 100% { border-color: #1A73E8; box-shadow: 0 0 15px rgba(26, 115, 232, 0.6); }
+      50% { border-color: #34A853; box-shadow: 0 0 25px rgba(52, 168, 83, 0.8); }
+    }
+    .animated-bounding-box {
+      animation: scan-box 3s infinite;
+    }
+
+    /* Pulse effects */
+    .pulse-glow {
+      animation: pulse-glow-keyframes 2s infinite;
+    }
+    @keyframes pulse-glow-keyframes {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    /* Scrollbar customization */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F3F4;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #C1C1C1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #A1A1A1;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col items-center justify-start py-0 md:py-6">
+
+  <!-- Desktop Wrapper: Center Mockup Frame for Mobile Feel -->
+  <div class="w-full max-w-md bg-white min-h-screen md:min-h-[850px] md:max-h-[900px] md:rounded-[40px] md:shadow-2xl md:border-[10px] md:border-gray-800 relative flex flex-col overflow-hidden">
+    
+    <!-- Status Bar (Simulated Mobile Top Bar) -->
+    <div class="bg-medBlue-700 text-white text-xs px-6 py-2 flex justify-between items-center z-50 select-none">
+      <span class="font-bold flex items-center gap-1">
+        <i class="fa-solid fa-heart-pulse text-red-400"></i> Love & Healthy
+      </span>
+      <div class="flex items-center gap-3">
+        <span id="signal-strength" class="flex items-center gap-1">
+          <i class="fa-solid fa-signal"></i> LTE
+        </span>
+        <span id="demo-badge" class="bg-amber-500 text-[10px] text-white font-extrabold px-1.5 py-0.5 rounded uppercase">PROTOTIPE</span>
+        <span id="current-time">08:00</span>
+      </div>
+    </div>
+
+    <!-- Active Weak Signal Toast Indicator -->
+    <div id="signal-toast" class="hidden bg-amber-500 text-white text-xs py-2 px-4 flex justify-between items-center transition-all duration-300 z-50 animate-bounce">
+      <span class="font-medium"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Sinyal lemah. Beralih ke mode 'Kirim Foto Berkala'...</span>
+      <button onclick="dismissToast()" class="text-white hover:text-gray-200"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Main Screens Container -->
+    <div class="flex-1 flex flex-col relative overflow-y-auto overflow-x-hidden bg-gray-50 pb-20">
+
+      <!-- ==============================================
+           SCREEN 1: HOME / LANDING SCREEN
+           ============================================== -->
+      <div id="screen-1" class="screen flex flex-col p-6 flex-1 justify-between">
+        <div class="flex flex-col items-center text-center mt-4">
+          <!-- Logo & Title -->
+          <div class="bg-medBlue-50 p-4 rounded-full mb-4">
+            <span class="text-5xl text-medBlue-500"><i class="fa-solid fa-heart-circle-plus"></i></span>
+          </div>
+          <h1 class="font-title text-3xl font-extrabold text-gray-800 tracking-tight">Love & Healthy</h1>
+          <p class="text-medBlue-500 text-sm font-semibold mt-1 tracking-wider uppercase">AI Asisten Kesehatan Visual Generasi Baru</p>
+          
+          <!-- Hero Banner Section -->
+          <div class="w-full bg-gradient-to-br from-medBlue-50 to-medGreen-50 rounded-2xl p-4 mt-6 border border-gray-100 flex flex-col items-center">
+            <div class="w-48 h-48 flex items-center justify-center relative">
+              <!-- Visual Mockup Image Simulation -->
+              <svg viewBox="0 0 200 200" class="w-full h-full text-medBlue-500">
+                <defs>
+                  <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#d2e3fc;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#c8e6c9;stop-opacity:1" />
+                  </linearGradient>
+                </defs>
+                <circle cx="100" cy="100" r="80" fill="url(#grad1)" />
+                <path d="M70,120 C70,95 90,75 110,75 C130,75 130,95 130,120" fill="none" stroke="#1a73e8" stroke-width="8" stroke-linecap="round"/>
+                <circle cx="100" cy="105" r="30" fill="#ffffff" stroke="#1a73e8" stroke-width="5" />
+                <!-- Medical Heart icon -->
+                <path d="M100,120 L90,110 A15,15 0 0,1 110,90 A15,15 0 0,1 120,110 Z" fill="#ea4335" transform="translate(-5,-10) scale(0.6)"/>
+              </svg>
+              <!-- Animated ripple -->
+              <div class="absolute inset-0 bg-medBlue-500 opacity-10 rounded-full animate-ping pointer-events-none"></div>
+            </div>
+            <p class="text-xs text-gray-500 max-w-xs mt-2 font-medium">Bimbingan diagnosis, peragaan arah visual 2D, pemantauan kualitas cahaya, rekam medis instan SIMRS, dan eskalasi darurat dalam satu genggaman.</p>
+          </div>
+
+          <!-- Feature Cards Bento Style -->
+          <div class="grid grid-cols-2 gap-3 w-full mt-6">
+            <div class="bg-white p-3 rounded-xl border border-gray-150 flex flex-col items-start text-left shadow-sm">
+              <span class="text-medBlue-500 mb-1.5"><i class="fa-solid fa-video"></i></span>
+              <h3 class="text-xs font-bold text-gray-800">Edge AI Visual</h3>
+              <p class="text-[10px] text-gray-500 mt-0.5">Analisis visual & deteksi pencahayaan real-time.</p>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-gray-150 flex flex-col items-start text-left shadow-sm">
+              <span class="text-medGreen-500 mb-1.5"><i class="fa-solid fa-clipboard-user"></i></span>
+              <h3 class="text-xs font-bold text-gray-800">Anamnesis AI</h3>
+              <p class="text-[10px] text-gray-500 mt-0.5">Pencatatan gejala cerdas terintegrasi SIMRS.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3 mt-8">
+          <button onclick="showDisclaimerPopup()" class="w-full bg-medBlue-500 hover:bg-medBlue-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-medBlue-100 flex items-center justify-center gap-2 transition-all">
+            <span>Mulai Konsultasi Kesehatan</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+          
+          <button onclick="demoQuickStart()" class="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all text-xs">
+            <i class="fa-solid fa-play text-medBlue-500"></i>
+            <span>Lihat Demo Instan</span>
+          </button>
+
+          <!-- Floating Info / Sticky Warning Label -->
+          <div class="bg-amber-50 rounded-xl p-3 border border-amber-200 text-left mt-2 flex items-start gap-2.5">
+            <span class="text-amber-500 mt-0.5"><i class="fa-solid fa-circle-exclamation text-sm"></i></span>
+            <p class="text-[10px] text-amber-800 font-medium leading-relaxed">
+              <strong>Info Penting:</strong> AI berfungsi sebagai asisten awal (alat bantu pengumpulan anamnesis) untuk mempercepat kerja medis. Keputusan akhir, resep obat, & diagnosis 100% berada di tangan dokter berlisensi.
+            </p>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ==============================================
+           SCREEN 2: VIDEO CALL / REAL-TIME ANALYSIS SCREEN
+           ============================================== -->
+      <div id="screen-2" class="screen hidden flex flex-col p-6 flex-1 justify-between">
+        <div class="flex flex-col">
+          <!-- Top Row Navigation / Title -->
+          <div class="flex justify-between items-center mb-4">
+            <button onclick="goToScreen(1)" class="text-gray-600 hover:text-gray-900 bg-gray-150 p-2 rounded-xl text-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-chevron-left"></i> Kembali
+            </button>
+            <span class="font-bold text-gray-800 text-sm">Analisis Visual AI</span>
+            <div class="flex items-center gap-1 bg-medGreen-50 text-medGreen-600 px-2 py-1 rounded-full text-[10px] font-bold">
+              <span class="w-1.5 h-1.5 bg-medGreen-500 rounded-full animate-ping"></span> Live Camera
+            </div>
+          </div>
+
+          <!-- Video Stream Container -->
+          <div class="relative bg-gray-900 rounded-3xl overflow-hidden aspect-[4/3] w-full flex items-center justify-center shadow-inner border border-gray-800">
+            <!-- Simulated Patient Camera Feed -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <!-- Grid background simulation -->
+              <div class="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+              
+              <!-- Patient Face/Skin Icon Visual -->
+              <div class="text-center text-gray-400 relative">
+                <i class="fa-regular fa-face-smile text-7xl text-medBlue-100"></i>
+                <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl text-red-400"><i class="fa-solid fa-crosshairs"></i></span>
+              </div>
+              <p class="text-[11px] text-gray-400 mt-2">Kamera Aktif — Tempatkan wajah/kulit di tengah</p>
+            </div>
+
+            <!-- Overlay Elements -->
+            <!-- Bounding Box Indicator with Scan Animation -->
+            <div class="absolute w-44 h-44 border-4 rounded-[28px] animated-bounding-box top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-between p-3 pointer-events-none">
+              <div class="flex justify-between w-full">
+                <span class="w-3 h-3 border-t-4 border-l-4 border-white"></span>
+                <span class="w-3 h-3 border-t-4 border-r-4 border-white"></span>
+              </div>
+              <div class="flex justify-between w-full">
+                <span class="w-3 h-3 border-b-4 border-l-4 border-white"></span>
+                <span class="w-3 h-3 border-b-4 border-r-4 border-white"></span>
+              </div>
+            </div>
+
+            <!-- Status Badges Overlay -->
+            <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+              <span class="bg-black/60 text-white text-[9px] px-2 py-1 rounded-md flex items-center gap-1.5">
+                <i class="fa-solid fa-expand text-medBlue-500"></i> Deteksi Wajah & Kulit
+              </span>
+              <span id="light-badge" class="bg-medGreen-500 text-white text-[9px] px-2 py-1 rounded-md flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-sun"></i> <span id="light-text">Pencahayaan: Baik</span>
+              </span>
+            </div>
+
+            <div class="absolute bottom-3 right-3">
+              <button onclick="toggleLighting()" class="bg-black/75 hover:bg-black text-white text-[10px] px-2.5 py-1.5 rounded-lg flex items-center gap-1">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Ubah Cahaya Demo
+              </button>
+            </div>
+          </div>
+
+          <!-- Observation / AI Readout Log -->
+          <div class="bg-gray-100 rounded-2xl p-3.5 mt-4 border border-gray-200">
+            <p class="text-[10px] text-gray-400 uppercase tracking-wider font-extrabold"><i class="fa-solid fa-comment-dots text-medBlue-500"></i> Catatan Observasi Real-time AI</p>
+            <div class="h-16 overflow-y-auto mt-1">
+              <p id="observation-text" class="text-xs text-gray-700 leading-relaxed font-mono">Menunggu inisiasi analisis... Tekan tombol "Mulai Analisis" di bawah untuk mendeteksi kulit atau wajah pasien.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2.5 mt-6">
+          <button id="btn-start-analysis" onclick="runAnalysisDemo()" class="w-full bg-medBlue-500 hover:bg-medBlue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid fa-microscope animate-pulse"></i>
+            <span>Mulai Analisis Visual</span>
+          </button>
+          
+          <button onclick="useLocalPhoto()" class="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all text-xs">
+            <i class="fa-solid fa-image text-medGreen-500"></i>
+            <span>Kirim Foto Jelas (Alternatif Offline)</span>
+          </button>
+
+          <!-- Signal Strength Adapter Demo Trigger -->
+          <div class="flex justify-between items-center text-[10px] text-gray-500 px-1 mt-1">
+            <span>Sistem beroperasi pada Edge AI (Pemrosesan HP)</span>
+            <button onclick="simulateWeakSignal()" class="text-medRed-500 font-semibold underline hover:text-medRed-600">Simulasikan Sinyal Lemah</button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ==============================================
+           SCREEN 3: ANAMNESIS / SYMPTOM CHECKLIST SCREEN
+           ============================================== -->
+      <div id="screen-3" class="screen hidden flex flex-col p-6 flex-1 justify-between">
+        <div class="flex flex-col">
+          <!-- Top Row -->
+          <div class="flex justify-between items-center mb-4">
+            <span class="font-bold text-gray-800 text-sm">Pencatatan Gejala Berbantuan AI</span>
+            <span class="text-xs text-medBlue-500 font-semibold" id="question-index">Pertanyaan 1 dari 4</span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden mb-6">
+            <div id="anamnesis-progress" class="bg-medBlue-500 h-full transition-all duration-300" style="width: 25%;"></div>
+          </div>
+
+          <!-- AI Chat Bubble -->
+          <div class="flex gap-3 items-start mb-6">
+            <div class="bg-medBlue-100 text-medBlue-600 p-2.5 rounded-2xl text-xl shrink-0">
+              <i class="fa-solid fa-user-doctor"></i>
+            </div>
+            <div class="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm relative">
+              <div class="absolute w-3 h-3 bg-white border-b border-l border-gray-200 transform rotate-45 -left-1.5 top-4"></div>
+              <p id="chat-question-text" class="text-xs text-gray-800 leading-relaxed font-medium">
+                Mulai kapan keluhan kemerahan atau gatal ini pertama kali muncul pada kulit Anda?
+              </p>
+            </div>
+          </div>
+
+          <!-- Answer Selection Area -->
+          <div class="flex flex-col gap-2" id="symptom-options-container">
+            <!-- Dynamic Buttons will render here -->
+          </div>
+
+          <!-- Custom Text Field Entry -->
+          <div class="mt-4 border-t border-gray-150 pt-4">
+            <p class="text-[10px] text-gray-400 mb-1.5">Atau ketik jawaban kustom Anda:</p>
+            <div class="flex gap-2">
+              <input type="text" id="custom-answer-input" placeholder="Masukkan detail jawaban..." class="flex-1 border border-gray-300 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-medBlue-500">
+              <button onclick="submitCustomAnswer()" class="bg-medBlue-500 text-white font-bold p-2.5 rounded-xl hover:bg-medBlue-600 transition-all text-xs">
+                Kirim
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Anamnesis Summary Compilation Preview (Hidden initially, visible on step 4 completion) -->
+        <div id="anamnesis-summary-box" class="hidden flex flex-col gap-3 mt-6">
+          <div class="bg-medGreen-50 border border-medGreen-100 rounded-2xl p-4">
+            <h4 class="text-xs font-extrabold text-medGreen-600 uppercase tracking-wider mb-2"><i class="fa-solid fa-list-check"></i> Rangkuman Hasil Anamnesis</h4>
+            <ul class="text-[11px] text-gray-700 space-y-2" id="summary-list">
+              <!-- Summary of responses -->
+            </ul>
+          </div>
+          <button onclick="goToScreen(4)" class="w-full bg-medGreen-500 hover:bg-medGreen-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all">
+            <span>Lanjut Hubungkan ke Dokter</span>
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+
+      <!-- ==============================================
+           SCREEN 4: DOCTOR CONNECTION & DASHBOARD
+           ============================================== -->
+      <div id="screen-4" class="screen hidden flex flex-col p-6 flex-1 justify-between">
+        
+        <!-- Case 1: Connecting Loading Animation (Pulsing and Spin) -->
+        <div id="doctor-connecting-view" class="flex flex-col items-center justify-center flex-1 py-16 text-center">
+          <div class="relative w-28 h-28 flex items-center justify-center">
+            <div class="absolute inset-0 bg-medBlue-500 opacity-20 rounded-full animate-ping"></div>
+            <div class="absolute inset-2 bg-medGreen-500 opacity-20 rounded-full animate-pulse"></div>
+            <div class="bg-white border-2 border-medBlue-500 rounded-full p-6 text-4xl text-medBlue-500 z-10 shadow-lg">
+              <i class="fa-solid fa-stethoscope animate-bounce"></i>
+            </div>
+          </div>
+          <h2 class="font-title text-xl font-extrabold text-gray-800 mt-6">Menghubungkan ke Dokter...</h2>
+          <p class="text-xs text-gray-500 max-w-xs mt-2 leading-relaxed">Mentransmisikan data mentah anamnesis dan data observasi visual AI secara terenkripsi ke portal rumah sakit.</p>
+          <div class="w-48 bg-gray-200 h-1.5 rounded-full mt-4 overflow-hidden">
+            <div class="bg-medBlue-500 h-full w-full animate-[shimmer_2s_infinite]"></div>
+          </div>
+        </div>
+
+        <!-- Case 2: Connected Split Dashboard Screen (Hidden initially, shown after delay) -->
+        <div id="doctor-connected-view" class="hidden flex flex-col flex-1">
+          <div class="flex justify-between items-center mb-4">
+            <span class="text-xs bg-medGreen-100 text-medGreen-600 px-2.5 py-1 rounded-full font-bold">
+              <i class="fa-solid fa-circle text-[8px] animate-pulse mr-1"></i> Sesi Dokter Aktif
+            </span>
+            <span class="text-xs text-gray-500">Durasi: <span id="session-timer">00:00</span></span>
+          </div>
+
+          <!-- Doctor Profile Card -->
+          <div class="bg-white border border-gray-150 rounded-2xl p-4 shadow-sm flex gap-3 items-center mb-4">
+            <div class="w-14 h-14 bg-medBlue-50 rounded-2xl overflow-hidden flex items-center justify-center border border-medBlue-100 shrink-0">
+              <svg viewBox="0 0 100 100" class="w-10 h-10 text-medBlue-500">
+                <circle cx="50" cy="40" r="22" fill="currentColor"/>
+                <path d="M50,65 C35,65 22,76 22,90 L78,90 C78,76 65,65 50,65 Z" fill="currentColor"/>
+              </svg>
+            </div>
+            <div class="flex-1 text-left">
+              <h3 class="text-sm font-extrabold text-gray-800">dr. Andi Pratama, Sp.KK</h3>
+              <p class="text-[10px] text-gray-500">Spesialis Kulit & Kelamin • RSUD Tasikmalaya</p>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-amber-500 text-xs"><i class="fa-solid fa-star"></i> 4.8</span>
+                <span class="text-[9px] text-gray-400">(120 Ulasan)</span>
+                <span class="text-[9px] bg-medGreen-50 text-medGreen-600 px-1.5 py-0.5 rounded font-semibold">TERSEDIA</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Split-Screen View -->
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <!-- Left Side: Doctor Video Call Simulator Frame -->
+            <div class="bg-gray-900 aspect-square rounded-2xl relative flex items-center justify-center overflow-hidden border border-gray-800 shadow-inner">
+              <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+              <!-- Simulated Video Frame (Placeholder for Doctor Feed) -->
+              <div class="text-center text-gray-400">
+                <i class="fa-solid fa-user-md text-4xl text-medBlue-100 animate-pulse"></i>
+                <p class="text-[8px] text-gray-400 mt-2 font-mono">PANGGILAN VIDEO...</p>
+              </div>
+              <span class="absolute bottom-2 left-2 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded">Dokter (RSUD)</span>
+            </div>
+
+            <!-- Right Side: Patient Data Summary / Clinical Overview -->
+            <div class="bg-white border border-gray-150 rounded-2xl p-3 flex flex-col justify-between overflow-y-auto aspect-square">
+              <div>
+                <p class="text-[8px] text-gray-400 font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-file-medical"></i> DATA ANAMNESIS (AI)</p>
+                <div class="text-[9px] text-gray-700 space-y-1" id="doctor-p-summary">
+                  <!-- Patient answers populated here -->
+                </div>
+              </div>
+              <div class="bg-medBlue-50 p-1.5 rounded-lg border border-medBlue-100 text-[8px] text-medBlue-700">
+                Data terkirim ke SIMRS (JSON terverifikasi).
+              </div>
+            </div>
+          </div>
+
+          <!-- Collaboration bridge details -->
+          <div class="bg-gradient-to-r from-medBlue-50 to-medGreen-50 p-3 rounded-xl border border-gray-150 flex items-start gap-2.5 text-left mb-4">
+            <span class="text-medBlue-500 text-sm mt-0.5"><i class="fa-solid fa-circle-nodes"></i></span>
+            <p class="text-[10px] text-gray-700 leading-relaxed">
+              <strong>Kolaborasi Tiga Arah:</strong> AI mengawasi kelayakan pencahayaan kamera dan meneruskan arahan dokter secara real-time ke layar Anda.
+            </p>
+          </div>
+
+          <button onclick="goToScreen(5)" class="w-full bg-medBlue-500 hover:bg-medBlue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all">
+            <span>Mulai Konsultasi & Gerakan</span>
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+
+      <!-- ==============================================
+           SCREEN 5: INTERACTIVE 2D MOVEMENT GUIDANCE
+           ============================================== -->
+      <div id="screen-5" class="screen hidden flex flex-col p-6 flex-1 justify-between">
+        <div class="flex flex-col">
+          <!-- Top Row Navigation -->
+          <div class="flex justify-between items-center mb-3">
+            <span class="font-bold text-gray-800 text-sm">Panduan Arah Visual 2D</span>
+            <span class="text-xs bg-medBlue-50 text-medBlue-600 px-2 py-0.5 rounded font-semibold"><i class="fa-solid fa-headset"></i> Audio Aktif</span>
+          </div>
+
+          <!-- Split View Layout -->
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <!-- Left Side: Camera view with 2D arrow overlays -->
+            <div class="bg-gray-900 rounded-2xl overflow-hidden aspect-square relative flex items-center justify-center border border-gray-800 shadow-inner">
+              <div class="absolute inset-0 flex items-center justify-center">
+                <i class="fa-regular fa-face-smile text-5xl text-gray-600"></i>
+              </div>
+
+              <!-- Interactive 2D Arrow Guide Overlay (CSS animation on focus) -->
+              <div id="arrow-up" class="absolute top-2 left-1/2 transform -translate-x-1/2 text-2xl text-medBlue-500 animate-bounce hidden">
+                <i class="fa-solid fa-circle-arrow-up"></i>
+              </div>
+              <div id="arrow-down" class="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-2xl text-medBlue-500 animate-bounce hidden">
+                <i class="fa-solid fa-circle-arrow-down"></i>
+              </div>
+              <div id="arrow-left" class="absolute left-2 top-1/2 transform -translate-y-1/2 text-2xl text-medBlue-500 animate-[bounce_1s_infinite] hidden">
+                <i class="fa-solid fa-circle-arrow-left"></i>
+              </div>
+              <div id="arrow-right" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-2xl text-medBlue-500 animate-[bounce_1.2s_infinite] hidden">
+                <i class="fa-solid fa-circle-arrow-right"></i>
+              </div>
+
+              <!-- General reticle circle -->
+              <div class="absolute w-24 h-24 border border-dashed border-white/50 rounded-full animate-spin pointer-events-none" style="animation-duration: 10s;"></div>
+              
+              <span class="absolute bottom-2 left-2 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded">Kamera Pasien</span>
+            </div>
+
+            <!-- Right Side: Dynamic Guidance Instructions Box -->
+            <div class="bg-white border border-gray-150 rounded-2xl p-3 flex flex-col justify-between aspect-square">
+              <div>
+                <p class="text-[8px] text-gray-400 font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-circle-info"></i> INSTRUKSI 2D</p>
+                <h4 id="guide-title" class="text-xs font-extrabold text-gray-800">Menghubungkan instruksi...</h4>
+                <p id="guide-desc" class="text-[9px] text-gray-500 mt-1 leading-relaxed">Silakan ikuti perintah dari dokter berlisensi di layar.</p>
+              </div>
+
+              <!-- Sound simulation controls -->
+              <div class="bg-gray-50 p-2 rounded-lg border border-gray-150">
+                <div class="flex items-center gap-1.5">
+                  <button onclick="playDemoAudio()" class="bg-medBlue-500 text-white p-1.5 rounded-md hover:bg-medBlue-600 transition-all text-[10px]">
+                    <i class="fa-solid fa-volume-high"></i> Play Audio
+                  </button>
+                  <span class="text-[8px] text-gray-400 leading-none">Simulasi TTS interaktif</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Two-Way Correction Alert Box (Simulated notification) -->
+          <div id="correction-banner" class="bg-amber-50 border border-amber-200 rounded-2xl p-3 mb-4 flex items-start gap-2.5 transition-all duration-300">
+            <span class="text-amber-500 text-sm mt-0.5 animate-pulse"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            <div class="text-left">
+              <p class="text-[9px] font-extrabold text-amber-800 uppercase tracking-wide">Pemberitahuan Koreksi Dua Arah</p>
+              <p id="correction-text" class="text-[10px] text-amber-700 mt-0.5">Sistem siap memandu arah gerak Anda. Klik langkah demo di bawah untuk simulasi koreksi.</p>
+            </div>
+          </div>
+
+          <!-- Demo Controller Steps for Guidance Simulator -->
+          <div class="bg-gray-100 rounded-2xl p-3 border border-gray-200">
+            <p class="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider mb-2">Pilih Skenario Demo Bimbingan:</p>
+            <div class="grid grid-cols-3 gap-1.5 text-center">
+              <button onclick="runGuidanceScenario(1)" class="bg-white border border-gray-200 text-[10px] py-1.5 px-2 rounded-lg font-semibold text-gray-700 hover:border-medBlue-500">1. Tunjukkan Lidah</button>
+              <button onclick="runGuidanceScenario(2)" class="bg-white border border-gray-200 text-[10px] py-1.5 px-2 rounded-lg font-semibold text-gray-700 hover:border-medBlue-500">2. Arah Kamera</button>
+              <button onclick="runGuidanceScenario(3)" class="bg-white border border-gray-200 text-[10px] py-1.5 px-2 rounded-lg font-semibold text-gray-700 hover:border-medBlue-500">3. Koreksi Gerak</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consultation Outcomes Route Selection -->
+        <div class="flex flex-col gap-2.5 mt-4">
+          <div class="text-[10px] text-gray-400 text-center uppercase tracking-wider font-extrabold">Alur Diagnosis Dokter (Pilih salah satu)</div>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="finishConsultationNormal()" class="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 text-xs py-2.5 px-2 rounded-xl font-bold transition-all shadow-sm flex flex-col items-center justify-center gap-1">
+              <i class="fa-solid fa-heart-pulse text-medBlue-500 text-sm"></i>
+              <span>Normal Case</span>
+            </button>
+            <button onclick="finishConsultationMild()" class="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 text-xs py-2.5 px-2 rounded-xl font-bold transition-all shadow-sm flex flex-col items-center justify-center gap-1">
+              <i class="fa-solid fa-prescription-bottle-medical text-medGreen-500 text-sm"></i>
+              <span>Kasus Ringan</span>
+            </button>
+            <button onclick="triggerEmergencyDirect()" class="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 text-xs py-2.5 px-2 rounded-xl font-bold transition-all shadow-sm flex flex-col items-center justify-center gap-1">
+              <i class="fa-solid fa-truck-medical text-medRed-500 text-sm"></i>
+              <span>Darurat (RS)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ==============================================
+           SCREEN 6: DOCTOR REFERRAL & EMERGENCY ESCALATION
+           ============================================== -->
+      <div id="screen-6" class="screen hidden flex flex-col p-6 flex-1 justify-between">
+        <div class="flex flex-col">
+          <!-- Warnings Header -->
+          <div class="bg-medRed-50 border border-medRed-100 rounded-2xl p-4 text-center mb-4">
+            <span class="text-3xl text-medRed-500"><i class="fa-solid fa-circle-exclamation animate-ping"></i></span>
+            <h3 class="font-title text-base font-extrabold text-medRed-600 mt-2">▲ KONDISI TAMPAK MEMBURUK</h3>
+            <p class="text-[11px] text-medRed-700 mt-1 leading-relaxed">Peringatan Kritis! AI & Dokter mendeteksi indikasi kegawatdaruratan pada gejala visual Anda. Segera lakukan eskalasi.</p>
+          </div>
+
+          <!-- Two-step confirmation logic UI -->
+          <div class="bg-white border border-gray-150 rounded-2xl p-4 mb-4">
+            <p class="text-xs font-bold text-gray-700 mb-2">Mekanisme Panggilan 2-Langkah:</p>
+            
+            <div id="escalation-step-1" class="flex flex-col gap-2">
+              <p class="text-[11px] text-gray-500 mb-2">Langkah 1: Setujui rujukan darurat ambulans ke RS terdekat.</p>
+              <button onclick="confirmEscalationStep1()" class="w-full bg-medRed-500 hover:bg-medRed-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-square-check"></i> Saya Setuju (Aktifkan Panggilan)
+              </button>
+            </div>
+
+            <div id="escalation-step-2" class="hidden flex flex-col items-center text-center py-2">
+              <div class="w-12 h-12 bg-medRed-50 text-medRed-500 rounded-full flex items-center justify-center text-xl font-extrabold animate-pulse mb-2" id="countdown-timer">
+                30
+              </div>
+              <p class="text-xs font-bold text-gray-800">Menghubungi Petugas Ambulans...</p>
+              <p class="text-[10px] text-gray-500 mt-0.5">Petugas medis akan menghubungi Anda balik dalam 30 detik untuk verifikasi akhir guna mencegah penyalahgunaan.</p>
+            </div>
+          </div>
+
+          <!-- GPS map placeholder and simulated hospitals -->
+          <div class="bg-white border border-gray-150 rounded-2xl overflow-hidden mb-4">
+            <!-- Simulated map visualization canvas -->
+            <div class="bg-slate-200 h-28 flex items-center justify-center relative">
+              <div class="absolute inset-0 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] bg-[size:12px_12px] opacity-40"></div>
+              <div class="absolute top-1/2 left-1/3 text-medRed-500 text-xl animate-bounce"><i class="fa-solid fa-location-dot"></i></div>
+              <div class="absolute top-1/3 left-2/3 text-medBlue-500 text-sm"><i class="fa-solid fa-hospital"></i></div>
+              <span class="absolute bottom-2 right-2 bg-black/60 text-white text-[8px] px-2 py-0.5 rounded"><i class="fa-solid fa-map-location-dot"></i> Peta Tasikmalaya (Simulasi)</span>
+            </div>
+
+            <div class="p-3">
+              <p class="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider mb-2">Rumah Sakit Rujukan Terdekat:</p>
+              <div class="space-y-2">
+                <div class="flex justify-between items-center text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="text-medBlue-500"><i class="fa-solid fa-hospital-user"></i></span>
+                    <span class="font-bold text-gray-700">RSUD Tasikmalaya</span>
+                  </div>
+                  <span class="text-[11px] text-gray-500 font-mono">2.3 km (Terdekat)</span>
+                </div>
+                <div class="flex justify-between items-center text-xs border-t border-gray-100 pt-1.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-medBlue-500"><i class="fa-solid fa-hospital-user"></i></span>
+                    <span class="font-bold text-gray-700">RS Muhammadiyah</span>
+                  </div>
+                  <span class="text-[11px] text-gray-500 font-mono">4.1 km</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2.5 mt-4">
+          <button onclick="sendDataToHospital()" class="w-full bg-medBlue-500 hover:bg-medBlue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Kirim Data Rekam Medis ke RSUD</span>
+          </button>
+          
+          <button onclick="skipToScreen(8)" class="w-full bg-white border border-gray-200 text-gray-600 py-2 rounded-xl text-xs hover:bg-gray-50">
+            Lewati ke Halaman Rekaman Medis
+          </button>
+        </div>
+      </div>
+
+
+      <!-- ==============================================
+           SCREEN 7: MEDICATION DELIVERY (LOGISTICS INTEGRATION)
+           ============================================== -->
+      <div id="screen-7" class="screen hidden flex flex-col p-6 flex-1 justify-between">
+        <div class="flex flex-col">
+          <!-- Top prescription header -->
+          <div class="flex justify-between items-center mb-4">
+            <span class="font-bold text-gray-800 text-sm">Resep & Pengiriman Apotek</span>
+            <span class="text-xs bg-medGreen-50 text-medGreen-600 px-2 py-0.5 rounded font-bold">Resep Terbit</span>
+          </div>
+
+          <!-- Prescription Card -->
+          <div class="bg-white border border-gray-150 rounded-2xl p-4 shadow-sm mb-4">
+            <div class="flex justify-between items-start border-b border-gray-150 pb-2.5 mb-2.5">
+              <div>
+                <h4 class="text-xs font-bold text-gray-800">E-Resep Resmi</h4>
+                <p class="text-[9px] text-gray-400">Dokter: dr. Andi Pratama, Sp.KK</p>
+              </div>
+              <span class="text-[9px] text-gray-500 font-mono">ID: Rx-998273</span>
+            </div>
+            <ul class="text-[11px] text-gray-700 space-y-1.5" id="rx-medicines-list">
+              <!-- Custom medications selected during workflow -->
+            </ul>
+          </div>
+
+          <!-- Pharmacy Partners Selection -->
+          <div class="bg-white border border-gray-150 rounded-2xl p-4 mb-4">
+            <p class="text-xs font-extrabold text-gray-800 uppercase tracking-wide mb-2.5"><i class="fa-solid fa-store text-medGreen-500"></i> Pilih Apotek Mitra terdekat:</p>
+            <div class="space-y-2">
+              <label class="flex justify-between items-center bg-gray-50 hover:bg-gray-100 p-2.5 rounded-xl border border-gray-200 cursor-pointer">
+                <div class="flex items-center gap-2.5">
+                  <input type="radio" name="pharmacy-option" checked value="Kimia Farma" class="text-medBlue-500 focus:ring-0">
+                  <span class="text-xs font-bold text-gray-700">Apotek Kimia Farma</span>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs font-bold text-gray-800">Rp 15.000</p>
+                  <p class="text-[8px] text-gray-400">1.2 km</p>
+                </div>
+              </label>
+              <label class="flex justify-between items-center bg-gray-50 hover:bg-gray-100 p-2.5 rounded-xl border border-gray-200 cursor-pointer">
+                <div class="flex items-center gap-2.5">
+                  <input type="radio" name="pharmacy-option" value="Apotek K24" class="text-medBlue-500 focus:ring-0">
+                  <span class="text-xs font-bold text-gray-700">Apotek K24</span>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs font-bold text-gray-800">Rp 20.000</p>
+                  <p class="text-[8px] text-gray-400">2.5 km</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Logistics Delivery Partners selection -->
+          <div class="bg-white border border-gray-150 rounded-2xl p-4 mb-4">
+            <p class="text-xs font-extrabold text-gray-800 uppercase tracking-wide mb-2.5"><i class="fa-solid fa-truck text-medBlue-500"></i> Kurir Logistik Instant:</p>
+            <div class="flex gap-4">
+              <label class="flex-1 flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-200 cursor-pointer">
+                <span class="text-xs font-bold text-gray-700"><i class="fa-solid fa-motorcycle text-medGreen-500 mr-1.5"></i> Gojek</span>
+                <input type="radio" name="courier-option" checked value="Gojek">
+              </label>
+              <label class="flex-1 flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-200 cursor-pointer">
+                <span class="text-xs font-bold text-gray-700"><i class="fa-solid fa-motorcycle text-medGreen-500 mr-1.5"></i> Grab</span>
+                <input type="radio" name="courier-option" value="Grab">
+              </label>
+            </div>
+          </div>
+
+          <!-- Real-time Tracking Simulation Section -->
+          <div id="logistics-tracking-box" class="hidden bg-medBlue-50 border border-medBlue-100 rounded-2xl p-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-extrabold text-medBlue-700"><i class="fa-solid fa-hourglass-half"></i> STATUS PENGIRIMAN</span>
+              <span class="text-[10px] text-medBlue-600" id="tracking-percentage">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden mb-2">
+              <div id="tracking-bar" class="bg-medBlue-500 h-full transition-all duration-300" style="width: 0%;"></div>
+            </div>
+            <p id="tracking-text" class="text-xs text-gray-700 font-medium leading-relaxed">Menyiapkan pesanan...</p>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2.5 mt-4">
+          <button id="btn-order-meds" onclick="startMedOrderTracking()" class="w-full bg-medBlue-500 hover:bg-medBlue-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span>Pesan Antar Obat Sekarang</span>
+          </button>
+          
+          <button id="btn-next-doc" onclick="skipToScreen(8)" class="hidden w-full bg-medGreen-500 hover:bg-medGreen-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all">
+            <span>Selesai & Lihat Rekam Medis</span>
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+
+      <!-- ==============================================
+           SCREEN 8: DOCUMENTATION & MEDICAL RECORD
+           ============================================== -->
+      <div id="screen-8" class="screen hidden flex flex-col p-6 flex-1 justify-between">
+        <div class="flex flex-col">
+          <!-- Header -->
+          <div class="flex justify-between items-center mb-4">
+            <span class="font-bold text-gray-800 text-sm">Dokumentasi Medis Resmi (PDF/JSON)</span>
+            <span class="text-xs bg-medGreen-100 text-medGreen-600 px-2 py-0.5 rounded font-semibold">Tersimpan ke SIMRS</span>
+          </div>
+
+          <!-- Document Box -->
+          <div class="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm text-left relative">
+            <div class="absolute top-4 right-4 text-medBlue-500 text-xl"><i class="fa-solid fa-file-shield animate-pulse"></i></div>
+            
+            <h3 class="font-title text-base font-extrabold text-gray-800 text-center border-b border-gray-150 pb-2 mb-3">REKAM MEDIS PASIEN</h3>
+            
+            <!-- Patient general metadata -->
+            <div class="grid grid-cols-2 gap-y-1.5 text-[11px] text-gray-600 border-b border-gray-100 pb-3 mb-3">
+              <div><strong class="text-gray-800">Nama:</strong> Fariz Ali Nurdin</div>
+              <div><strong class="text-gray-800">Usia / Tgl:</strong> 24 Tahun / 2026-08-13</div>
+              <div><strong class="text-gray-800">Lokasi:</strong> Tasikmalaya</div>
+              <div><strong class="text-gray-800">Integrasi:</strong> SIMRS Aktif</div>
+            </div>
+
+            <!-- Recorded symptoms & checklist summary -->
+            <div class="mb-3">
+              <p class="text-[9px] text-gray-400 font-extrabold uppercase mb-1">RANGKUMAN SYMPTOM (AI)</p>
+              <div id="doc-symptoms" class="text-xs text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-150">
+                Data keluhan belum dicatat.
+              </div>
+            </div>
+
+            <!-- Doctor diagnosis -->
+            <div class="mb-3">
+              <p class="text-[9px] text-gray-400 font-extrabold uppercase mb-1">DIAGNOSIS AKHIR DOKTER</p>
+              <div id="doc-diagnosis" class="text-xs text-gray-800 bg-medGreen-50 border border-medGreen-100 p-2.5 rounded-xl font-medium">
+                Pencatatan klinis awal disahkan oleh dr. Andi Pratama, Sp.KK.
+              </div>
+            </div>
+
+            <!-- Prescription Details -->
+            <div>
+              <p class="text-[9px] text-gray-400 font-extrabold uppercase mb-1">RESEP OBAT & TINDAKAN</p>
+              <div id="doc-prescription" class="text-xs text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-150">
+                Istirahat cukup dan oleskan krim pelindung.
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Action buttons -->
+          <div class="grid grid-cols-2 gap-3 mt-4">
+            <button onclick="downloadPdfReport()" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-xs">
+              <i class="fa-solid fa-file-pdf text-medRed-500 text-sm"></i>
+              <span>Unduh PDF</span>
+            </button>
+            <button onclick="downloadJsonReport()" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-xs">
+              <i class="fa-solid fa-file-code text-medBlue-500 text-sm"></i>
+              <span>Unduh JSON</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3 mt-6">
+          <button onclick="saveToMedicalRecordComplete()" class="w-full bg-medGreen-500 hover:bg-medGreen-600 text-white font-bold py-3 px-6 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Simpan ke Rekam Medis Cloud</span>
+          </button>
+          
+          <button onclick="resetDemoWorkflow()" class="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>Mulai Ulang Demo</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Persistent Red Emergency Button (Always available in the corner except home/connecting screen) -->
+    <button id="persistent-emergency-btn" onclick="triggerEmergencyDirect()" class="hidden absolute bottom-5 right-5 w-14 h-14 bg-medRed-500 hover:bg-medRed-600 text-white rounded-full shadow-lg flex items-center justify-center text-xl transition-all z-40 pulse-glow">
+      <i class="fa-solid fa-phone-flip"></i>
+    </button>
+
+    <!-- Bottom Navigation Bar (Inactive tabs styled for mockup completeness) -->
+    <div class="absolute bottom-0 inset-x-0 bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center z-50">
+      <button onclick="resetDemoWorkflow()" class="flex flex-col items-center gap-0.5 text-medBlue-500">
+        <i class="fa-solid fa-house text-sm"></i>
+        <span class="text-[9px] font-bold">Beranda</span>
+      </button>
+      <button onclick="goToScreen(2)" class="flex flex-col items-center gap-0.5 text-gray-400 hover:text-gray-600">
+        <i class="fa-solid fa-camera text-sm"></i>
+        <span class="text-[9px] font-bold">Analisis</span>
+      </button>
+      <button onclick="goToScreen(3)" class="flex flex-col items-center gap-0.5 text-gray-400 hover:text-gray-600">
+        <i class="fa-solid fa-clipboard-question text-sm"></i>
+        <span class="text-[9px] font-bold">Anamnesis</span>
+      </button>
+      <button onclick="goToScreen(8)" class="flex flex-col items-center gap-0.5 text-gray-400 hover:text-gray-600">
+        <i class="fa-solid fa-file-medical text-sm"></i>
+        <span class="text-[9px] font-bold">Dokumen</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Disclaimer Footer -->
+  <div class="max-w-md w-full px-4 text-center mt-4 mb-8">
+    <p class="text-[10px] text-gray-500 leading-relaxed">
+      AI Asisten Kesehatan Visual ini berfungsi sebagai alat bantu (assistance), bukan pengganti diagnosis dokter. Keputusan medis final tetap di tangan dokter berlisensi.
+    </p>
+  </div>
+
+  <!-- Disclaimer Accept Modal Popup -->
+  <div id="disclaimer-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[999] hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-gray-150">
+      <span class="text-4xl text-medBlue-500"><i class="fa-solid fa-shield-halved animate-pulse"></i></span>
+      <h3 class="font-title text-lg font-extrabold text-gray-800 mt-3">Persetujuan Layanan</h3>
+      <p class="text-xs text-gray-600 mt-2.5 leading-relaxed">
+        Layanan ini merupakan prototipe asisten kesehatan visual kecerdasan buatan. AI hanya membantu mempercepat pencatatan keluhan (anamnesis) dan visual awal Anda.
+      </p>
+      <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 text-left mt-3">
+        <p class="text-[10px] text-amber-800 font-medium leading-relaxed">
+          <strong>Perhatian:</strong> AI tidak mengeluarkan keputusan klinis resmi ataupun resep mandiri. Anda akan terhubung langsung dengan dokter berlisensi untuk validasi medis akhir sesuai Permenkes No. 24/2022.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2.5 mt-5">
+        <button onclick="acceptDisclaimer()" class="w-full bg-medBlue-500 hover:bg-medBlue-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all">
+          Saya Mengerti & Setuju
+        </button>
+        <button onclick="closeDisclaimer()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 px-4 rounded-xl text-xs transition-all">
+          Batal
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- JavaScript State and Animation Engine -->
+  <script>
+    // System States
+    let state = {
+      currentScreen: 1,
+      selectedSampleCase: null,
+      lightingGood: true,
+      weakSignalSimulated: false,
+      currentAnamnesisStep: 1,
+      anamnesisAnswers: {
+        complaint: '',
+        duration: '',
+        history: '',
+        allergies: ''
+      },
+      escalationStep: 1,
+      trackingPercent: 0,
+      trackingInterval: null
+    };
+
+    // Simulated Questions for Step 3
+    const anamnesisQuestions = [
+      {
+        step: 1,
+        question: "Mulai kapan keluhan kemerahan atau gatal ini pertama kali muncul pada kulit Anda?",
+        options: ["Sejak hari ini", "Sejak 2-3 hari lalu", "Sudah lebih dari 1 minggu", "Kambuh perlahan semenjak kemarin"],
+        key: "complaint"
+      },
+      {
+        step: 2,
+        question: "Apakah area yang mengalami keluhan terasa gatal, perih, atau nyeri berlebih?",
+        options: ["Sangat gatal & ingin digaruk", "Terasa perih seperti terbakar", "Nyeri tekan & ngilu", "Tidak ada rasa gatal/nyeri khusus"],
+        key: "duration"
+      },
+      {
+        step: 3,
+        question: "Apakah keluhan serupa pernah terjadi pada Anda sebelumnya di lokasi yang sama?",
+        options: ["Ini adalah pertama kalinya", "Pernah beberapa kali kambuh", "Sering terjadi jika kelelahan", "Hanya muncul saat musim dingin/panas"],
+        key: "history"
+      },
+      {
+        step: 4,
+        question: "Apakah Anda memiliki riwayat alergi obat, makanan, debu, atau zat tertentu?",
+        options: ["Alergi makanan laut / telur", "Alergi obat (seperti antibiotik)", "Alergi debu & cuaca dingin", "Tidak memiliki riwayat alergi apapun"],
+        key: "allergies"
+      }
+    ];
+
+    // Set Time in Header
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('current-time').textContent = `${hours}:${minutes}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Reset workflow
+    function resetDemoWorkflow() {
+      if (state.trackingInterval) clearInterval(state.trackingInterval);
+      state = {
+        currentScreen: 1,
+        selectedSampleCase: null,
+        lightingGood: true,
+        weakSignalSimulated: false,
+        currentAnamnesisStep: 1,
+        anamnesisAnswers: {
+          complaint: '',
+          duration: '',
+          history: '',
+          allergies: ''
+        },
+        escalationStep: 1,
+        trackingPercent: 0,
+        trackingInterval: null
+      };
+
+      // Reset DOM Elements
+      document.getElementById('custom-answer-input').value = '';
+      document.getElementById('signal-toast').classList.add('hidden');
+      document.getElementById('signal-strength').innerHTML = `<i class="fa-solid fa-signal"></i> LTE`;
+      document.getElementById('escalation-step-1').classList.remove('hidden');
+      document.getElementById('escalation-step-2').classList.add('hidden');
+      document.getElementById('countdown-timer').textContent = "30";
+      document.getElementById('btn-order-meds').classList.remove('hidden');
+      document.getElementById('btn-next-doc').classList.add('hidden');
+      document.getElementById('logistics-tracking-box').classList.add('hidden');
+      document.getElementById('btn-start-analysis').disabled = false;
+      document.getElementById('observation-text').textContent = 'Menunggu inisiasi analisis... Tekan tombol "Mulai Analisis" di bawah untuk mendeteksi kulit atau wajah pasien.';
+      
+      // Clear indicators
+      document.getElementById('arrow-up').classList.add('hidden');
+      document.getElementById('arrow-down').classList.add('hidden');
+      document.getElementById('arrow-left').classList.add('hidden');
+      document.getElementById('arrow-right').classList.add('hidden');
+      
+      goToScreen(1);
+    }
+
+    // Navigation core
+    function goToScreen(screenNumber) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+      document.getElementById(`screen-${screenNumber}`).classList.remove('hidden');
+      state.currentScreen = screenNumber;
+
+      // Handle persistent emergency floating action button visibility
+      const emergencyBtn = document.getElementById('persistent-emergency-btn');
+      if (screenNumber > 1 && screenNumber !== 4 && screenNumber !== 6) {
+        emergencyBtn.classList.remove('hidden');
+      } else {
+        emergencyBtn.classList.add('hidden');
+      }
+    }
+
+    function skipToScreen(screenNumber) {
+      goToScreen(screenNumber);
+    }
+
+    // Modal popup triggers
+    function showDisclaimerPopup() {
+      document.getElementById('disclaimer-modal').classList.remove('hidden');
+    }
+
+    function closeDisclaimer() {
+      document.getElementById('disclaimer-modal').classList.add('hidden');
+    }
+
+    function acceptDisclaimer() {
+      closeDisclaimer();
+      goToScreen(2);
+    }
+
+    function demoQuickStart() {
+      goToScreen(2);
+    }
+
+    // Screen 2 Interactions
+    function toggleLighting() {
+      state.lightingGood = !state.lightingGood;
+      const lightBadge = document.getElementById('light-badge');
+      const lightText = document.getElementById('light-text');
+
+      if (state.lightingGood) {
+        lightBadge.className = "bg-medGreen-500 text-white text-[9px] px-2 py-1 rounded-md flex items-center gap-1.5 transition-colors";
+        lightText.textContent = "Pencahayaan: Baik";
+        document.getElementById('observation-text').textContent = "Pencahayaan memadai. Deteksi visual mendeteksi adanya kemerahan ringan terlokalisasi di area pipi.";
+      } else {
+        lightBadge.className = "bg-medRed-500 text-white text-[9px] px-2 py-1 rounded-md flex items-center gap-1.5 transition-colors";
+        lightText.textContent = "Pencahayaan: Kurang (Saran: Cari tempat lebih terang)";
+        document.getElementById('observation-text').textContent = "Pencahayaan terlalu rendah. Deteksi terhambat bayangan. Pasien disarankan bergeser ke dekat jendela/lampu terang.";
+      }
+    }
+
+    function simulateWeakSignal() {
+      state.weakSignalSimulated = true;
+      document.getElementById('signal-toast').classList.remove('hidden');
+      document.getElementById('signal-strength').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500 animate-pulse"></i> Lemah`;
+    }
+
+    function dismissToast() {
+      document.getElementById('signal-toast').classList.add('hidden');
+    }
+
+    function runAnalysisDemo() {
+      const btn = document.getElementById('btn-start-analysis');
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Menganalisis...`;
+      btn.disabled = true;
+
+      document.getElementById('observation-text').textContent = "AI sedang mengevaluasi struktur epidermal kulit...";
+
+      setTimeout(() => {
+        btn.innerHTML = `<i class="fa-solid fa-microscope"></i> Mulai Analisis Visual`;
+        btn.disabled = false;
+        
+        // Populate simulated diagnosis
+        document.getElementById('observation-text').innerHTML = "<strong>Visual AI mendeteksi:</strong> Area eritema (kemerahan) berdiameter ~3cm di pipi kiri. Batas tegas, tidak ada pustul aktif. <br><span class='text-medBlue-500 font-bold'>Rekomendasi: Lanjut pengumpulan anamnesis untuk diagnosis dokter.</span>";
+        
+        setTimeout(() => {
+          goToScreen(3);
+          renderAnamnesisStep();
+        }, 2000);
+      }, 1500);
+    }
+
+    function useLocalPhoto() {
+      alert("Menyimulasikan pengunggahan foto resolusi tinggi dari galeri lokal pasien. Berhasil diunggah ke sistem Edge AI!");
+      goToScreen(3);
+      renderAnamnesisStep();
+    }
+
+
+    // Screen 3: Progressive Anamnesis Checklist
+    function renderAnamnesisStep() {
+      const stepIdx = state.currentAnamnesisStep - 1;
+      const qData = anamnesisQuestions[stepIdx];
+
+      // Update Header progress
+      document.getElementById('question-index').textContent = `Pertanyaan ${state.currentAnamnesisStep} dari 4`;
+      const progressPercent = (state.currentAnamnesisStep / 4) * 100;
+      document.getElementById('anamnesis-progress').style.width = `${progressPercent}%`;
+
+      // Update question text
+      document.getElementById('chat-question-text').textContent = qData.question;
+
+      // Update option buttons
+      const container = document.getElementById('symptom-options-container');
+      container.innerHTML = '';
+      qData.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "w-full bg-white hover:bg-medBlue-50 text-gray-700 font-medium py-3 px-4 rounded-xl border border-gray-200 text-left text-xs transition-all flex justify-between items-center";
+        btn.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-chevron-right text-gray-300"></i>`;
+        btn.onclick = () => selectAnamnesisAnswer(qData.key, opt);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectAnamnesisAnswer(key, value) {
+      state.anamnesisAnswers[key] = value;
+      
+      if (state.currentAnamnesisStep < 4) {
+        state.currentAnamnesisStep++;
+        renderAnamnesisStep();
+      } else {
+        // Complete Anamnesis, compilation view
+        showAnamnesisSummary();
+      }
+    }
+
+    function submitCustomAnswer() {
+      const input = document.getElementById('custom-answer-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const qData = anamnesisQuestions[state.currentAnamnesisStep - 1];
+      input.value = '';
+      selectAnamnesisAnswer(qData.key, val);
+    }
+
+    function showAnamnesisSummary() {
+      document.getElementById('symptom-options-container').innerHTML = '';
+      document.getElementById('custom-answer-input').closest('.mt-4').classList.add('hidden');
+      document.getElementById('anamnesis-summary-box').classList.remove('hidden');
+
+      const sumList = document.getElementById('summary-list');
+      sumList.innerHTML = `
+        <li><i class="fa-solid fa-circle-dot text-medGreen-500 mr-2"></i><strong>Onset:</strong> ${state.anamnesisAnswers.complaint}</li>
+        <li><i class="fa-solid fa-circle-dot text-medGreen-500 mr-2"></i><strong>Sensasi:</strong> ${state.anamnesisAnswers.duration}</li>
+        <li><i class="fa-solid fa-circle-dot text-medGreen-500 mr-2"></i><strong>Riwayat:</strong> ${state.anamnesisAnswers.history}</li>
+        <li><i class="fa-solid fa-circle-dot text-medGreen-500 mr-2"></i><strong>Alergi:</strong> ${state.anamnesisAnswers.allergies}</li>
+      `;
+    }
+
+
+    // Screen 4: Doctor Connection Dashboard
+    function runDoctorConnectionSimulation() {
+      document.getElementById('doctor-connecting-view').classList.remove('hidden');
+      document.getElementById('doctor-connected-view').classList.add('hidden');
+
+      // Populate right-side panel
+      const docPSum = document.getElementById('doctor-p-summary');
+      docPSum.innerHTML = `
+        <p><strong>• Mulai:</strong> ${state.anamnesisAnswers.complaint || "Belum dicatat"}</p>
+        <p><strong>• Sensasi:</strong> ${state.anamnesisAnswers.duration || "Belum dicatat"}</p>
+        <p><strong>• Riwayat:</strong> ${state.anamnesisAnswers.history || "Belum dicatat"}</p>
+        <p><strong>• Alergi:</strong> ${state.anamnesisAnswers.allergies || "Tidak ada"}</p>
+      `;
+
+      // Start connection delay
+      setTimeout(() => {
+        document.getElementById('doctor-connecting-view').classList.add('hidden');
+        document.getElementById('doctor-connected-view').classList.remove('hidden');
+        
+        // Start duration counter timer
+        let secs = 0;
+        const timerEl = document.getElementById('session-timer');
+        const interval = setInterval(() => {
+          if (state.currentScreen !== 4 && state.currentScreen !== 5) {
+            clearInterval(interval);
+            return;
+          }
+          secs++;
+          const mins = String(Math.floor(secs / 60)).padStart(2, '0');
+          const remainingSecs = String(secs % 60).padStart(2, '0');
+          timerEl.textContent = `${mins}:${remainingSecs}`;
+        }, 1000);
+
+      }, 2000);
+    }
+
+    // Override goToScreen to handle doctor connection screen load side-effects
+    const origGoToScreen = goToScreen;
+    goToScreen = function(screenNumber) {
+      origGoToScreen(screenNumber);
+      if (screenNumber === 4) {
+        runDoctorConnectionSimulation();
+      }
+    };
+
+
+    // Screen 5: 2D Movement Guidance
+    function playDemoAudio() {
+      // Visual feedback of audio guidance simulation
+      alert("🎵 [Simulasi Suara AI]: 'Mohon hadapkan wajah Anda perlahan ke arah kanan sesuai petunjuk panah di layar...'");
+    }
+
+    function runGuidanceScenario(scenarioIdx) {
+      const up = document.getElementById('arrow-up');
+      const down = document.getElementById('arrow-down');
+      const left = document.getElementById('arrow-left');
+      const right = document.getElementById('arrow-right');
+      const title = document.getElementById('guide-title');
+      const desc = document.getElementById('guide-desc');
+      const banner = document.getElementById('correction-banner');
+      const corrText = document.getElementById('correction-text');
+
+      // Reset arrows
+      up.classList.add('hidden');
+      down.classList.add('hidden');
+      left.classList.add('hidden');
+      right.classList.add('hidden');
+
+      if (scenarioIdx === 1) {
+        title.textContent = "Skenario 1: Tunjukkan Lidah";
+        desc.textContent = "Dokter membutuhkan konfirmasi hidrasi tubuh. Tunjukkan lidah Anda tepat di lingkar tengah reticle.";
+        up.classList.remove('hidden');
+        banner.className = "bg-medGreen-50 border border-medGreen-100 rounded-2xl p-3 mb-4 flex items-start gap-2.5 transition-all duration-300";
+        corrText.innerHTML = "<strong>Koreksi AI:</strong> Gerakan tepat. Area mulut berada di pusat fokus.";
+      } else if (scenarioIdx === 2) {
+        title.textContent = "Skenario 2: Arahkan Kamera ke Luka";
+        desc.textContent = "Dokter menginstruksikan kamera didekatkan pada lesi kulit pipi kiri untuk analisis granular.";
+        left.classList.remove('hidden');
+        banner.className = "bg-medGreen-50 border border-medGreen-100 rounded-2xl p-3 mb-4 flex items-start gap-2.5 transition-all duration-300";
+        corrText.innerHTML = "<strong>Pesan Dokter:</strong> Terima kasih Fariz, pertahankan posisi kamera tersebut.";
+      } else if (scenarioIdx === 3) {
+        title.textContent = "Skenario 3: Deteksi Koreksi Dua Arah";
+        desc.textContent = "Simulasi pasien salah mengarahkan atau dokter tidak sengaja keluar standar dosis obat.";
+        right.classList.remove('hidden');
+        banner.className = "bg-amber-50 border border-amber-200 rounded-2xl p-3 mb-4 flex items-start gap-2.5 transition-all duration-300 animate-pulse";
+        corrText.innerHTML = "<strong>Peringatan AI (Dua Arah):</strong> Pasien mohon arahkan ke KANAN. <br><span class='text-amber-800 font-bold'>Ke Dokter:</span> Catatan resep krim terindikasi melebih frekuensi harian standar medis Tasikmalaya.";
+      }
+    }
+
+
+    // Screen 6: Referral and Emergency Escalation
+    function confirmEscalationStep1() {
+      document.getElementById('escalation-step-1').classList.add('hidden');
+      document.getElementById('escalation-step-2').classList.remove('hidden');
+      
+      // Start countdown
+      let count = 30;
+      const cdEl = document.getElementById('countdown-timer');
+      const cdInterval = setInterval(() => {
+        if (state.currentScreen !== 6) {
+          clearInterval(cdInterval);
+          return;
+        }
+        count--;
+        cdEl.textContent = count;
+        if (count <= 0) {
+          clearInterval(cdInterval);
+          alert("Panggilan Balik Berhasil Dikonfirmasi! Petugas RSUD Tasikmalaya telah mengirimkan ambulans.");
+          goToScreen(8);
+          populateFinalDocumentation("EMERGENCY_ESCALATION");
+        }
+      }, 1000);
+    }
+
+    function sendDataToHospital() {
+      alert("Seluruh berkas rekam medis klinis & JSON terintegrasi berhasil dikirim langsung ke database pusat SIMRS RSUD Tasikmalaya!");
+      goToScreen(8);
+      populateFinalDocumentation("EMERGENCY_ESCALATION");
+    }
+
+    function triggerEmergencyDirect() {
+      goToScreen(6);
+    }
+
+
+    // Screen 7: Medication Delivery Tracking
+    function startMedOrderTracking() {
+      document.getElementById('btn-order-meds').classList.add('hidden');
+      document.getElementById('logistics-tracking-box').classList.remove('hidden');
+      
+      const trackPercent = document.getElementById('tracking-percentage');
+      const trackBar = document.getElementById('tracking-bar');
+      const trackText = document.getElementById('tracking-text');
+
+      state.trackingPercent = 0;
+      state.trackingInterval = setInterval(() => {
+        state.trackingPercent += 20;
+        trackPercent.textContent = `${state.trackingPercent}%`;
+        trackBar.style.width = `${state.trackingPercent}%`;
+
+        if (state.trackingPercent === 20) {
+          trackText.textContent = "Apotek memverifikasi resep resmi...";
+        } else if (state.trackingPercent === 40) {
+          trackText.textContent = "Obat sedang dikemas oleh apoteker...";
+        } else if (state.trackingPercent === 60) {
+          trackText.textContent = "Kurir telah mengambil pesanan di Apotek Mitra...";
+        } else if (state.trackingPercent === 80) {
+          trackText.textContent = "Kurir sedang dalam perjalanan menuju lokasi Anda...";
+        } else if (state.trackingPercent === 100) {
+          clearInterval(state.trackingInterval);
+          trackText.className = "text-xs text-medGreen-600 font-bold leading-relaxed";
+          trackText.innerHTML = "<i class='fa-solid fa-circle-check'></i> Obat Anda berhasil diterima di Tasikmalaya!";
+          
+          document.getElementById('btn-next-doc').classList.remove('hidden');
+        }
+      }, 1500);
+    }
+
+
+    // Screen 8: Complete Documentation Generator
+    function finishConsultationNormal() {
+      goToScreen(8);
+      populateFinalDocumentation("NORMAL_CASE");
+    }
+
+    function finishConsultationMild() {
+      goToScreen(7);
+      
+      // Populate custom e-prescription in Screen 7
+      const rxList = document.getElementById('rx-medicines-list');
+      rxList.innerHTML = `
+        <li><i class="fa-solid fa-capsules text-medGreen-500 mr-2"></i><strong>Calamine Lotion</strong> - 2x Sehari (Oles Pipi)</li>
+        <li><i class="fa-solid fa-pill text-medGreen-500 mr-2"></i><strong>Cetirizine 10mg</strong> - 1x Sehari (Malam hari)</li>
+        <li><i class="fa-solid fa-droplet text-medGreen-500 mr-2"></i><strong>Krim Pelindung Hidrasi</strong> - Sesuai Kebutuhan</li>
+      `;
+    }
+
+    function populateFinalDocumentation(type) {
+      const symptomsBox = document.getElementById('doc-symptoms');
+      const diagnosisBox = document.getElementById('doc-diagnosis');
+      const RxBox = document.getElementById('doc-prescription');
+
+      symptomsBox.innerHTML = `
+        <p><strong>• Keluhan Utama:</strong> Eritema kemerahan ringan di pipi</p>
+        <p><strong>• Sejak:</strong> ${state.anamnesisAnswers.complaint || "2-3 hari lalu"}</p>
+        <p><strong>• Rasa:</strong> ${state.anamnesisAnswers.duration || "Sangat gatal"}</p>
+        <p><strong>• Alergi:</strong> ${state.anamnesisAnswers.allergies || "Tidak terdeteksi"}</p>
+      `;
+
+      if (type === "NORMAL_CASE") {
+        diagnosisBox.className = "text-xs text-medBlue-800 bg-medBlue-50 border border-medBlue-100 p-2.5 rounded-xl font-medium";
+        diagnosisBox.innerHTML = `<strong>Kondisi Normal / Lesi Kulit Ringan</strong><br>Bukan indikasi berbahaya. Tidak ada pustul aktif. Pengawasan mandiri dilanjutkan.`;
+        RxBox.textContent = "Tetap jaga kebersihan area pipi, kurangi paparan debu, & gunakan krim pelembab non-komedogenik.";
+      } else if (type === "EMERGENCY_ESCALATION") {
+        diagnosisBox.className = "text-xs text-medRed-800 bg-medRed-50 border border-medRed-100 p-2.5 rounded-xl font-medium";
+        diagnosisBox.innerHTML = `<strong>Gejala Visual Berisiko Tinggi</strong><br>Dugaan awal reaksi anafilaksis akut / radang jaringan parah. Perlu eskalasi RS segera.`;
+        RxBox.innerHTML = "<span class='text-medRed-600 font-bold'>Tindakan Gawat Darurat Ambulans RSUD Tasikmalaya diaktifkan.</span>";
+      } else {
+        diagnosisBox.className = "text-xs text-medGreen-800 bg-medGreen-50 border border-medGreen-100 p-2.5 rounded-xl font-medium";
+        diagnosisBox.innerHTML = `<strong>Dermatitis Kontak Alergi Ringan</strong><br>Divalidasi secara klinis oleh dr. Andi Pratama, Sp.KK.`;
+        RxBox.innerHTML = "Calamine Lotion (oles pipi) & Cetirizine 10mg (obat minum). Terkirim ke mitra pengiriman Gojek.";
+      }
+    }
+
+    // Download mock utilities
+    function downloadPdfReport() {
+      const jsonStr = getFinalReportJson();
+      const blob = new Blob([JSON.stringify(JSON.parse(jsonStr), null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "LoveAndHealthy_RekamMedis_Fariz.pdf";
+      link.click();
+      alert("Simulasi Berhasil: File 'LoveAndHealthy_RekamMedis_Fariz.pdf' berhasil dibuat dan diunduh ke folder Downloads Anda.");
+    }
+
+    function downloadJsonReport() {
+      const jsonStr = getFinalReportJson();
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "LoveAndHealthy_SIMRS_Data.json";
+      link.click();
+      alert("Simulasi Berhasil: Format JSON terstruktur standar SIMRS (Sistem Informasi Rumah Sakit) berhasil diunduh.");
+    }
+
+    function getFinalReportJson() {
+      return JSON.stringify({
+        app_identity: "Love & Healthy Visual Assistant",
+        patient: {
+          name: "Fariz Ali Nurdin",
+          age: 24,
+          location: "Tasikmalaya, West Java, Indonesia"
+        },
+        consultation_meta: {
+          doctor_in_charge: "dr. Andi Pratama, Sp.KK",
+          institution: "RSUD Tasikmalaya",
+          timestamp: "2026-08-13T08:00:00Z"
+        },
+        anamnesis_ai: state.anamnesisAnswers,
+        clinical_outcome: {
+          visual_observation_ai: "Area eritema kemerahan diameter ~3cm",
+          final_diagnosis_approved: "Dermatitis Kontak Alergi",
+          prescription: ["Calamine Lotion", "Cetirizine 10mg"]
+        },
+        disclaimer: "This is a prototype. AI provides assistance only. Final medical decisions must be made by a licensed doctor."
+      });
+    }
+
+    function saveToMedicalRecordComplete() {
+      alert("Alhamdulillah! Seluruh catatan medis visual Anda berhasil diunggah secara aman dan disinkronkan ke Rekam Medis Cloud terpadu.");
+    }
+  </script>
+</body>
+</html>

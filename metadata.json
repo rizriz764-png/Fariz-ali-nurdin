@@ -1,0 +1,6 @@
+{
+  "name": "AI Asisten Kesehatan Visual",
+  "description": "Asisten telemedisin real-time untuk pencatatan anamnesis visual 2D, deteksi indikator gawat darurat 2-langkah, dan rekam medis SIMRS (Permenkes No. 24/2022).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
